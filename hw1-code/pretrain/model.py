@@ -133,13 +133,17 @@ class GPT(nn.Module):
                 with torch.no_grad():
                     sd[k].copy_(sd_hf[k])
         return model
+    
+    
+    
+    
 if __name__=="__main__":
     # config=GPTConfig()
     model=GPT.from_pretrained('gpt2')
     print("no error!")
-    
+    device="cuda" if torch.cuda.is_available() else "cpu"
     max_len=30
-    model.to("cuda")
+    model.to(device)
     model.eval()
     prompt="Hello.Who are you?"
     
@@ -148,7 +152,7 @@ if __name__=="__main__":
     gpt2_tokenizer = GPT2Tokenizer.from_pretrained('E:/slider and homework/202502/llm-align/hw/hw1-code/gpt')
     tokens=gpt2_tokenizer.encode(prompt)
     tokens=torch.tensor(tokens,dtype=torch.long).unsqueeze(0).repeat(2,1)
-    x=tokens.to("cuda")
+    x=tokens.to(device)
     
     torch.manual_seed(42)
     while(x.size(1)<max_len):
