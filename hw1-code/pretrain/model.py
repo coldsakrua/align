@@ -10,7 +10,7 @@ class GPTConfig:
     n_ctx=1024
     
 
-class CaualSelfAttention(nn.Module):
+class CausalSelfAttention(nn.Module):
     def __init__(self,config):
         super().__init__()
         self.n_head=config.n_head
