@@ -35,6 +35,5 @@ class DataloaderLite:
         self.current_batch+=1
         return x,y
     
-    def reset_batch_pointer(self):
-        self.current_batch=0
+    
         
