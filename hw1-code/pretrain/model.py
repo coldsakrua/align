@@ -166,4 +166,4 @@ if __name__=="__main__":
             if next_token[0] == gpt2_tokenizer.eos_token_id:
                 break
             
-    print(f"generated:{generated_text}")
+    print(f"generated text:{generated_text}")
