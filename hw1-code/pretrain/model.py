@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 from dataclasses import dataclass
+import torch.nn.functional as F
+
 @dataclass
 class GPTConfig:
     vocab_size:int=50257    
@@ -82,7 +84,7 @@ class GPT(nn.Module):
         self.lm_head=nn.Linear(config.n_embd,config.vocab_size,bias=False)
         
     
-    def forward(self,idx):
+    def forward(self,idx, targets=None):
         B,T=idx.size()
         assert T<=self.config.block_size
         pos=torch.arange(0,T,dtype=torch.long,device=idx.device)
@@ -95,8 +97,14 @@ class GPT(nn.Module):
         x=self.transformer.ln_f(x)
         
         logits=self.lm_head(x)
-        return logits
-    
+        
+        loss=None
+        if targets is not None:
+            loss=F.cross_entropy(logits.view(-1,logits.size(-1)),targets.view(-1))
+
+            return logits,loss
+        else:
+            return logits
     
     
     @classmethod
@@ -171,3 +179,7 @@ if __name__=="__main__":
                 break
             
     print(f"generated text:{generated_text}")
+
+    
+
+
