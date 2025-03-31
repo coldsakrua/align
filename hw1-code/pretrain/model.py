@@ -83,11 +83,16 @@ class GPT(nn.Module):
         
         self.lm_head=nn.Linear(config.n_embd,config.vocab_size,bias=False)
         self.transformer.wte.weight=self.lm_head.weight
+        self.c_proj.STD_INIT=1
         self.apply(self._init_weights)
 
     def _init_weights(self,module):
+        
         if isinstance(module,nn.Linear):
-            torch.nn.init.normal_(module.weight,mean=0.0,std=0.02)
+            std=0.02
+            if hasattr(module,'INIT_STD'):
+                std*=(2*self.config.n_layer)**-0.5
+            torch.nn.init.normal_(module.weight,mean=0.0,std=std)
             if module.bias is not None:
                 torch.nn.init.zeros_(module.bias)
         elif isinstance(module,nn.Embedding):
@@ -105,9 +110,7 @@ class GPT(nn.Module):
         for block in self.transformer.h:
             x=block(x)
         x=self.transformer.ln_f(x)
-        
         logits=self.lm_head(x)
-        
         loss=None
         if targets is not None:
             loss=F.cross_entropy(logits.view(-1,logits.size(-1)),targets.view(-1))
