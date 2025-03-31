@@ -19,37 +19,37 @@ class CausalSelfAttention(nn.Module):
         
         self.register_buffer('bias',torch.tril(torch.ones(config.block_size,config.block_size)).view(1,1,config.block_size,config.block_size))
         
-        self.qkv=nn.Linear(config.n_embd,config.n_embd*3)
+        self.c_attn=nn.Linear(config.n_embd,config.n_embd*3)
 
         
-        self.proj=nn.Linear(config.n_embd,config.n_embd)
+        self.c_proj=nn.Linear(config.n_embd,config.n_embd)
     def forward(self,x):
         B,T,C=x.size()
-        q,k,v=self.qkv(x).split(C,dim=-1)
-        q=self.q(x).view(B,T,self.n_head,self.head_dim).transpose(1,2)
-        k=self.k(x).view(B,T,self.n_head,self.head_dim).transpose(1,2)
-        v=self.v(x).view(B,T,self.n_head,self.head_dim).transpose(1,2)
+        q,k,v=self.c_attn(x).split(C,dim=-1)
+        q=q.view(B,T,self.n_head,self.head_dim).transpose(1,2)
+        k=k.view(B,T,self.n_head,self.head_dim).transpose(1,2)
+        v=v.view(B,T,self.n_head,self.head_dim).transpose(1,2)
         
         attn=q@k.transpose(-2,-1)*self.scale
-        attn=attn.masked_fill(self.mask[:,:,:T,:T]==0,float('-inf'))
+        attn=attn.masked_fill(self.bias[:,:,:T,:T]==0,float('-inf'))
         attn=attn.softmax(dim=-1)
         
         y=attn@v
         y=y.transpose(1,2).contiguous().view(B,T,C)
-        y=self.proj(y)
+        y=self.c_proj(y)
         return y
 
 class MLP(nn.Module):
     def __init__(self,config):
         super().__init__()
-        self.fc1=nn.Linear(config.n_embd,4*config.n_embd)
+        self.c_fc=nn.Linear(config.n_embd,4*config.n_embd)
         self.act=nn.GELU(approximate='tanh')
-        self.fc2=nn.Linear(4*config.n_embd,config.n_embd)
+        self.c_proj=nn.Linear(4*config.n_embd,config.n_embd)
     
     def forward(self,x):
-        x=self.fc1(x)
+        x=self.c_fc(x)
         x=self.act(x)
-        x=self.fc2(x)
+        x=self.c_proj(x)
         return x
 
 class block(nn.Module):
@@ -81,7 +81,24 @@ class GPT(nn.Module):
         
         self.lm_head=nn.Linear(config.n_embd,config.vocab_size,bias=False)
         
+    
+    def forward(self,idx):
+        B,T=idx.size()
+        assert T<=self.config.block_size
+        pos=torch.arange(0,T,dtype=torch.long,device=idx.device)
+        pos_ebd=self.transformer.wpe(pos)
+        tok_ebd=self.transformer.wte(idx)
+        x=pos_ebd+tok_ebd
         
+        for block in self.transformer.h:
+            x=block(x)
+        x=self.transformer.ln_f(x)
+        
+        logits=self.lm_head(x)
+        return logits
+    
+    
+    
     @classmethod
     def from_pretrained(cls,model_type):
         assert model_type in ['gpt2','gpt2-medium','gpt2-large','gpt2-xl']
@@ -109,15 +126,44 @@ class GPT(nn.Module):
         transposed=['attn.c_attn.weight','attn.c_proj.weight','mlp.c_fc.weight','mlp.c_proj.weight']
         assert len(sd_keys)==len(sd_hf_keys)
         for k in sd_hf_keys:
-            if any(k.endswith(w) for w in transposed):
+            if any(k.endswith(ww) for ww in transposed):
                 with torch.no_grad():
-                    sd[k]=sd_hf[k].T
+                    sd[k].copy_(sd_hf[k].t())
             else:
                 with torch.no_grad():
-                    sd[k]=sd_hf[k]
+                    sd[k].copy_(sd_hf[k])
         return model
 if __name__=="__main__":
     # config=GPTConfig()
     model=GPT.from_pretrained('gpt2')
     print("no error!")
     
+    max_len=30
+    model.to("cuda")
+    model.eval()
+    prompt="Hello.Who are you?"
+    
+    import tiktoken
+    from transformers import GPT2Tokenizer
+    gpt2_tokenizer = GPT2Tokenizer.from_pretrained('E:/slider and homework/202502/llm-align/hw/hw1-code/gpt')
+    tokens=gpt2_tokenizer.encode(prompt)
+    tokens=torch.tensor(tokens,dtype=torch.long).unsqueeze(0).repeat(2,1)
+    x=tokens.to("cuda")
+    
+    torch.manual_seed(42)
+    while(x.size(1)<max_len):
+        with torch.no_grad():
+            y = model(x)
+            y = y[:, x.size(1)-1, :]
+            # 使用top-k采样
+            k = 40
+            v, _ = torch.topk(y, k)
+            prob = torch.softmax(v, dim=-1)
+            choice = torch.multinomial(prob, num_samples=1)
+            next_token = _.gather(-1, choice)
+            x = torch.cat([x, next_token], dim=1)
+            generated_text = gpt2_tokenizer.decode(x[0].tolist())
+            if next_token[0] == gpt2_tokenizer.eos_token_id:
+                break
+            
+    print(f"generated:{generated_text}")
