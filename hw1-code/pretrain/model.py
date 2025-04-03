@@ -41,11 +41,12 @@ class CausalSelfAttention(nn.Module):
         k=k.view(B,T,self.n_head,self.head_dim).transpose(1,2)
         v=v.view(B,T,self.n_head,self.head_dim).transpose(1,2)
         
-        attn=q@k.transpose(-2,-1)*self.scale
-        attn=attn.masked_fill(self.bias[:,:,:T,:T]==0,float('-inf'))
-        attn=attn.softmax(dim=-1)
+        # attn=q@k.transpose(-2,-1)*self.scale
+        # attn=attn.masked_fill(self.bias[:,:,:T,:T]==0,float('-inf'))
+        # attn=attn.softmax(dim=-1)
+        # y=attn@v
+        y=F.scaled_dot_product_attention(q,k,v,is_causal=True)  #flash attention
         
-        y=attn@v
         y=y.transpose(1,2).contiguous().view(B,T,C)
         y=self.c_proj(y)
         return y
