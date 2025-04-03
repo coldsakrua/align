@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 from dataclasses import dataclass
 import torch.nn.functional as F
+from data import DataloaderLite
+from torch.utils.data import DataLoader
+from torch.nn.optim import Adam,AdamW
 
 @dataclass
 class GPTConfig:
@@ -155,7 +158,24 @@ class GPT(nn.Module):
                     sd[k].copy_(sd_hf[k])
         return model
     
-    
+
+def train(model,dataloader,device,epoch):
+    model.train()
+    optimizer=AdamW(model.parameters(),lr=1e-4)
+    scheduler=torch.optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
+    for i,(x,y) in enumerate(dataloader):
+        x=x.to(device)
+        y=y.to(device)
+        with torch.autocast(device_type='cuda',dtype=torch.float16):
+            logits,loss=model(x,y)
+
+        if i%100==0:
+            print(f"epoch:{epoch},step:{i},loss:{loss.item()}")
+        
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        scheduler.step()
     
     
 if __name__=="__main__":
@@ -174,8 +194,12 @@ if __name__=="__main__":
     tokens=gpt2_tokenizer.encode(prompt)
     tokens=torch.tensor(tokens,dtype=torch.long).unsqueeze(0).repeat(2,1)
     x=tokens.to(device)
+    train_loader=DataloaderLite("None",batch=8,seq_len=1024,process_rank=0,num_processes=1,split="train",tokenizer=gpt2_tokenizer)
     
+    
+    import time
     torch.manual_seed(42)
+    start_time=time.time()
     while(x.size(1)<max_len):
         with torch.no_grad():
             y = model(x)
@@ -190,8 +214,13 @@ if __name__=="__main__":
             generated_text = gpt2_tokenizer.decode(x[0].tolist())
             if next_token[0] == gpt2_tokenizer.eos_token_id:
                 break
-            
+    end_time=time.time()
+    print(f"time cost:{end_time-start_time}")  
     print(f"generated text:{generated_text}")
+    
+    
+    
+    
 
     
 
