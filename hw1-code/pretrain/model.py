@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from data import DataloaderLite
 from torch.utils.data import DataLoader
 from torch.nn.optim import Adam,AdamW
+import math
 
 @dataclass
 class GPTConfig:
@@ -13,7 +14,12 @@ class GPTConfig:
     n_head:int=12
     n_embd:int=768
     block_size:int=1024
-    
+
+
+
+class TanhGELU(nn.Module):
+    def forward(self,x):
+        return 0.5*x*(1+torch.tanh(math.sqrt(2.0/math.pi)*(x+0.044715*torch.pow(x,3.0))))     ##避免传输loss
 
 class CausalSelfAttention(nn.Module):
     def __init__(self,config):
@@ -161,6 +167,7 @@ class GPT(nn.Module):
 
 def train(model,dataloader,device,epoch):
     model.train()
+    model=torch.compile(model)
     optimizer=AdamW(model.parameters(),lr=1e-4)
     scheduler=torch.optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
     for i,(x,y) in enumerate(dataloader):
