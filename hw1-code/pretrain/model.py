@@ -9,7 +9,7 @@ import math
 
 @dataclass
 class GPTConfig:
-    vocab_size:int=50257    
+    vocab_size:int=50304    
     n_layer:int=12
     n_head:int=12
     n_embd:int=768
@@ -138,7 +138,7 @@ class GPT(nn.Module):
         config_args={
             'gpt2':dict(n_head=12,n_layer=12,n_embd=768),
         }[model_type]
-        config_args['vocab_size']=50257
+        config_args['vocab_size']=50304
         config_args['block_size']=1024
         print(config_args)
         config=GPTConfig(**config_args)
