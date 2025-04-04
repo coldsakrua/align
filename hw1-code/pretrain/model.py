@@ -21,6 +21,13 @@ class GPTConfig:
     block_size:int=1024
 
 
+total_batch_size=2**19
+batch_size=16
+seq_len=1024
+assert total_batch_size%(batch_size*seq_len)==0
+grad_accum_steps=total_batch_size//(batch_size*seq_len)
+print(f"total_batch_size:{total_batch_size}")
+print(f"batch_size:{batch_size}")
 
 class TanhGELU(nn.Module):
     def forward(self,x):
@@ -211,16 +218,21 @@ def train(model,dataloader,device,epoch):
     optimizer=AdamW(model.parameters(),lr=1e-4,beta=(0.9,0.95),eps=1e-8,weight_decay=0.1)
     scheduler=torch.optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
     for i,(x,y) in enumerate(dataloader):
-        x=x.to(device)
-        y=y.to(device)
-        with torch.autocast(device_type='cuda',dtype=torch.float16):
+        loss_num=0
+        for micro_step in range(grad_accum_steps):
+            #forward
+            x,y=dataloader.next_batch()
+            x=x.to(device)
+            y=y.to(device)
             logits,loss=model(x,y)
-
-        if i%100==0:
-            print(f"epoch:{epoch},step:{i},loss:{loss.item()}")
-        
+            #backward
+            with torch.autocast(device_type='cuda',dtype=torch.float16):
+                logits,loss=model(x,y)
+            loss=loss/grad_accum_steps
+            loss_num+=loss.detach()
+            loss.backward()
         optimizer.zero_grad()
-        loss.backward()
+        
         norm=torch.nn.utils.clip_grad_norm_(model.parameters(),1.0)
         lr=get_lr(i)
         for param_group in optimizer.param_groups:
