@@ -202,12 +202,30 @@ def get_lr(it,warmup_it=10,max_it=50,lr_max=3e-4,lr_min=3e-5):
     return lr_min+coeff*(lr_max-lr_min)
     
 
-
+def get_most_likely_row(tokens, mask, logits):
+    # evaluate the autoregressive loss at all positions
+    shift_logits = (logits[..., :-1, :]).contiguous()
+    shift_tokens = (tokens[..., 1:]).contiguous()
+    flat_shift_logits = shift_logits.view(-1, shift_logits.size(-1))
+    flat_shift_tokens = shift_tokens.view(-1)
+    shift_losses = F.cross_entropy(flat_shift_logits, flat_shift_tokens, reduction='none')
+    shift_losses = shift_losses.view(tokens.size(0), -1)
+    # now get the average loss just for the completion region (where mask == 1), in each row
+    shift_mask = (mask[..., 1:]).contiguous() # we must shift mask, so we start at the last prompt token
+    masked_shift_losses = shift_losses * shift_mask
+    # sum and divide by the number of 1s in the mask
+    sum_loss = masked_shift_losses.sum(dim=1)
+    avg_loss = sum_loss / shift_mask.sum(dim=1)
+    # now we have a loss for each of the 4 completions
+    # the one with the lowest loss should be the most likely
+    pred_norm = avg_loss.argmin().item()
+    return pred_norm
 
 # def train(model,dataloader,device,epoch,ddp,grad_accum_steps):
     
     
-if __name__=="__main__":    
+if __name__=="__main__": 
+    use_compile=False   
     from torch.distributed import init_process_group, destroy_process_group
 
     ddp=int(os.environ.get("RANK",1))!=-1
@@ -242,20 +260,79 @@ if __name__=="__main__":
     
     model=GPT.from_pretrained('gpt2')
     print("no error!")
-    device="cuda" if torch.cuda.is_available() else "cpu"
     max_len=30
-    model.to(device)
-    model=torch.compile(model)
+    if use_compile:
+        model=torch.compile(model)
+    epoch=1000
+    dataloader=DataloaderLite("None",batch=batch_size,seq_len=seq_len,process_rank=ddp_rank,num_processes=ddp_world_size,split="train")
+    val_loader=DataloaderLite("None",batch=8,seq_len=1024,process_rank=0,num_processes=1,split="val",tokenizer=gpt2_tokenizer)
     if ddp:
         model=DDP(model,device_ids=[ddp_local_rank])
     raw_model=model.module if ddp else model
-    
+    val_loss_step=20
     # train(raw_model,train_loader,device,1,ddp,grad_accum_steps=grad_accum_steps)
     model.train()
     optimizer=raw_model.configure_optimizers(weight_decay=0.1,lr=1e-4,device=device)
     # optimizer=AdamW(model.parameters(),lr=1e-4,beta=(0.9,0.95),eps=1e-8,weight_decay=0.1)
     # scheduler=torch.optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
-    for i,(x,y) in enumerate(dataloader):
+    log_dir="log"
+    os.makedirs(log_dir,exist_ok=True)
+    log_file=os.path.join(log_dir,"log.txt")
+    with open(log_file,"w") as f:
+        # f.write("")
+        pass
+    
+    for i in tqdm(range(epoch)):
+        last_step=(i==epoch-1)
+        if i%100==0:
+            model.eval()
+            val_loader.reset()
+            
+            with torch.no_grad():
+                val_loss=0
+                val_num=0
+                for _ in range(val_loss_step):
+                    x,y=val_loader.next_batch()
+                    x=x.to(device)
+                    y=y.to(device)
+                    with torch.autocast(device_type=device,dtype=torch.bfloat16):
+                        logits,loss=model(x,y)
+                    val_loss+=loss.detach()/val_loss_step
+            if ddp:
+                dist.all_reduce(val_loss,op=dist.ReduceOp.AVG)
+            if master_process:
+                print(f"epoch:{i},val_loss:{val_loss}")
+        
+        
+        if (i%250==0 or last_step)  and(not use_compile):
+            num_correct_num=0
+            num_total=0
+            for i,example in enumerate(iterate_examples("val")):
+                if i%ddp_world_size==ddp_rank:
+                    data, tokens, mask, label = render_example(example)
+                    tokens = tokens.to(device)
+                    mask = mask.to(device)
+                    with torch.no_grad():
+                        with torch.autocast(device_type=device,dtype=torch.bfloat16):
+                            logits,loss=model(tokens)
+                        pred_norm=get_most_likely_row(tokens, mask, logits)
+                        num_correct_num+=int(pred_norm==label)
+                        num_total+=1
+                else:
+                    continue
+            if ddp:
+                num_total=torch.tensor(num_total,dtype=torch.long,device=device)
+                num_correct_num=torch.tensor(num_correct_num,dtype=torch.long,device=device)
+                dist.all_reduce(torch.tensor(num_correct_num),op=dist.ReduceOp.SUM)
+                dist.all_reduce(torch.tensor(num_total),op=dist.ReduceOp.SUM)
+                num_total=num_total.item()
+                num_correct_num=num_correct_num.item()
+            acc_norm=num_correct_num/num_total
+            if master_process:
+                print(f"epoch:{i},val_acc:{num_correct_num/num_total}")
+                with open(log_file,"a") as f:
+                    f.write(f"epoch:{i},val_acc:{num_correct_num/num_total}\n")
+        
         loss_num=0
         for micro_step in range(grad_accum_steps):
             #forward
@@ -264,7 +341,7 @@ if __name__=="__main__":
             y=y.to(device)
             logits,loss=model(x,y)
             #backward
-            with torch.autocast(device_type='cuda',dtype=torch.float16):
+            with torch.autocast(device_type='cuda',dtype=torch.bfloat16):
                 logits,loss=model(x,y)
             loss=loss/grad_accum_steps
             loss_num+=loss.detach()
@@ -283,6 +360,8 @@ if __name__=="__main__":
         # scheduler.step()
     if ddp:
         destroy_process_group()
+        
+    
     model.eval()
     prompt="Hello.Who are you?"
     
@@ -298,21 +377,28 @@ if __name__=="__main__":
     import time
     torch.manual_seed(42)
     start_time=time.time()
+    num_return_general=4
     while(x.size(1)<max_len):
         with torch.no_grad():
-            y = model(x)
-            y = y[:, x.size(1)-1, :]
+            with torch.autocast(device_type='cuda',dtype=torch.bfloat16):
+                y,loss=model(x)
+
+            y = y[:, -1, :]
+            y = torch.softmax(v, dim=-1)
             # 使用top-k采样
             k = 40
             v, _ = torch.topk(y, k)
-            prob = torch.softmax(v, dim=-1)
             choice = torch.multinomial(prob, num_samples=1)
             next_token = _.gather(-1, choice)
             x = torch.cat([x, next_token], dim=1)
-            generated_text = gpt2_tokenizer.decode(x[0].tolist())
-            if next_token[0] == gpt2_tokenizer.eos_token_id:
-                break
+            
+    for i in range(num_return_general):
+        tokens=x[i:max_len].tolist()
+        generated_text = gpt2_tokenizer.decode(tokens)
+        print(f"rank{ddp_rank} sample{i}:{generated_text}")
     end_time=time.time()
     print(f"time cost:{end_time-start_time}")  
     print(f"generated text:{generated_text}")
-
+   
+    
+    
