@@ -21,14 +21,6 @@ class GPTConfig:
     block_size:int=1024
 
 
-total_batch_size=2**19
-batch_size=16
-seq_len=1024
-assert total_batch_size%(batch_size*seq_len)==0
-grad_accum_steps=total_batch_size//(batch_size*seq_len)
-print(f"total_batch_size:{total_batch_size}")
-print(f"batch_size:{batch_size}")
-
 class TanhGELU(nn.Module):
     def forward(self,x):
         return 0.5*x*(1+torch.tanh(math.sqrt(2.0/math.pi)*(x+0.044715*torch.pow(x,3.0))))     ##避免传输loss
@@ -212,11 +204,57 @@ def get_lr(it,warmup_it=10,max_it=50,lr_max=3e-4,lr_min=3e-5):
 
 
 
-def train(model,dataloader,device,epoch):
-    model.train()
+# def train(model,dataloader,device,epoch,ddp,grad_accum_steps):
+    
+    
+if __name__=="__main__":    
+    from torch.distributed import init_process_group, destroy_process_group
+
+    ddp=int(os.environ.get("RANK",1))!=-1
+
+    if ddp:
+        assert torch.cuda.is_available()
+        init_process_group(backend="nccl")
+        ddp_rank=int(os.environ["RANK"])
+        ddp_local_rank=int(os.environ["LOCAL_RANK"])
+        ddp_world_size=int(os.environ["WORLD_SIZE"])
+        device=torch.device(f"cuda:{ddp_local_rank}")
+        device=f"cuda:{ddp_local_rank}"
+        torch.cuda.set_device(device)
+        master_process=ddp_rank==0
+
+    else:
+        ddp_rank=0
+        ddp_local_rank=0
+        ddp_world_size=1
+        device="cuda" if torch.cuda.is_available() else "cpu"
+        master_process=True
+
+
+    total_batch_size=2**19
+    batch_size=16
+    seq_len=1024
+    assert total_batch_size%(batch_size*seq_len*ddp_world_size)==0
+    grad_accum_steps=total_batch_size//(batch_size*seq_len*ddp_world_size)
+    print(f"total_batch_size:{total_batch_size}")
+    print(f"batch_size:{batch_size}")
+    # config=GPTConfig()
+    
+    model=GPT.from_pretrained('gpt2')
+    print("no error!")
+    device="cuda" if torch.cuda.is_available() else "cpu"
+    max_len=30
+    model.to(device)
     model=torch.compile(model)
-    optimizer=AdamW(model.parameters(),lr=1e-4,beta=(0.9,0.95),eps=1e-8,weight_decay=0.1)
-    scheduler=torch.optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
+    if ddp:
+        model=DDP(model,device_ids=[ddp_local_rank])
+    raw_model=model.module if ddp else model
+    
+    # train(raw_model,train_loader,device,1,ddp,grad_accum_steps=grad_accum_steps)
+    model.train()
+    optimizer=raw_model.configure_optimizers(weight_decay=0.1,lr=1e-4,device=device)
+    # optimizer=AdamW(model.parameters(),lr=1e-4,beta=(0.9,0.95),eps=1e-8,weight_decay=0.1)
+    # scheduler=torch.optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
     for i,(x,y) in enumerate(dataloader):
         loss_num=0
         for micro_step in range(grad_accum_steps):
@@ -230,7 +268,11 @@ def train(model,dataloader,device,epoch):
                 logits,loss=model(x,y)
             loss=loss/grad_accum_steps
             loss_num+=loss.detach()
+            if ddp:
+                model.require_backward_grad_sync=(micro_step==accumulation_steps-1)
             loss.backward()
+        if ddp:
+            dist.all_reduce(loss_num,op=dist.ReduceOp.AVG)
         optimizer.zero_grad()
         
         norm=torch.nn.utils.clip_grad_norm_(model.parameters(),1.0)
@@ -238,16 +280,9 @@ def train(model,dataloader,device,epoch):
         for param_group in optimizer.param_groups:
             param_group['lr']= lr
         optimizer.step()
-        scheduler.step()
-    
-    
-if __name__=="__main__":
-    # config=GPTConfig()
-    model=GPT.from_pretrained('gpt2')
-    print("no error!")
-    device="cuda" if torch.cuda.is_available() else "cpu"
-    max_len=30
-    model.to(device)
+        # scheduler.step()
+    if ddp:
+        destroy_process_group()
     model.eval()
     prompt="Hello.Who are you?"
     

@@ -10,7 +10,7 @@ class DataloaderLite:
         self.seq_len=seq_len
         self.process_rank=process_rank
         self.num_processes=num_processes
-        self.current_batch=0
+        self.current_position=self.B*self.seq_len*self.process_rank
         assert split in ['train','val']
         self.split=split
         
@@ -24,15 +24,15 @@ class DataloaderLite:
         print(f"batches:{len(self.tokens)//(self.batch*self.seq_len)}")
 
     def next_batch(self):
-        start_idx=self.current_batch*self.batch*self.seq_len
-        end_idx=(self.current_batch+1)*self.batch*self.seq_len
+        start_idx=self.current_position
+        end_idx=self.current_position+self.batch*self.seq_len
         buf=self.tokens[start_idx:end_idx]
         x=buf[:self.seq_len].view(self.batch,self.seq_len)
         y=buf[1:self.seq_len+1].view(self.batch,self.seq_len)
-        if buf.size(0)<self.seq_len+1:
-            x=torch.cat([x,torch.zeros(self.batch,self.seq_len-buf.size(0)+1,dtype=torch.long)],dim=1)
-            y=torch.cat([y,torch.zeros(self.batch,self.seq_len-buf.size(0)+1,dtype=torch.long)],dim=1)
-        self.current_batch+=1
+        
+        self.current_position+=self.seq_len*self.num_processes*self.batch
+        if self.current_position+self.seq_len*self.num_processes*self.batch+1>len(self.tokens):
+            self.current_position=self.batch*self.seq_len*self.process_rank
         return x,y
     
     
