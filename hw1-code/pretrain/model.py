@@ -4,8 +4,13 @@ from dataclasses import dataclass
 import torch.nn.functional as F
 from data import DataloaderLite
 from torch.utils.data import DataLoader
-from torch.nn.optim import Adam,AdamW
+from torch.optim import Adam,AdamW
 import math
+import inspect
+import torch.distributed as dist
+import torch.multiprocessing as mp
+from torch.nn.parallel import DistributedDataParallel as DDP
+
 
 @dataclass
 class GPTConfig:
@@ -129,7 +134,27 @@ class GPT(nn.Module):
         else:
             return logits
     
-    
+    def configure_optimizers(self,weight_decay,lr,device):
+        param_dict={pn:p for pn,p in self.named_parameters() if p.requires_grad}
+        decay_params=[p for n,p in param_dict.items() if p.dim()>=2]
+        no_decay_params=[p for n,p in param_dict.items() if p.dim()<2]
+        optim_groups=[
+            {'params':decay_params,'weight_decay':weight_decay},
+            {'params':no_decay_params,'weight_decay':0.0}
+        ]
+        num_decay_params=sum(p.numel() for p in decay_params)
+        num_no_decay_params=sum(p.numel() for p in no_decay_params)
+        print(f"num of params:{num_decay_params+num_no_decay_params}")
+        print(f"num of decay params:{num_decay_params}")
+        
+        fused_available='fused' in inspect.signature(torch.optim.AdamW).parameters
+        use_fused=fused_available and device.type=='cuda'
+        extra_args=dict(fused=True) if use_fused else dict()
+        optimizer=AdamW(optim_groups,lr=lr,betas=(0.9,0.95),eps=1e-8,weight_decay=0.1,**extra_args)
+        return optimizer
+        
+        
+          
     @classmethod
     def from_pretrained(cls,model_type):
         assert model_type in ['gpt2','gpt2-medium','gpt2-large','gpt2-xl']
@@ -164,12 +189,26 @@ class GPT(nn.Module):
                 with torch.no_grad():
                     sd[k].copy_(sd_hf[k])
         return model
+
+
+
+def get_lr(it,warmup_it=10,max_it=50,lr_max=3e-4,lr_min=3e-5):
+    if it<warmup_it:
+        return lr_max*it/warmup_it
+    elif it>max_it:
+        return lr_min
+    decay_ratio=(it-warmup_it)/(max_it-warmup_it)
+    assert 0<=decay_ratio<=1
+    coeff=0.5*(1.0+math.cos(math.pi*decay_ratio))
+    return lr_min+coeff*(lr_max-lr_min)
     
+
+
 
 def train(model,dataloader,device,epoch):
     model.train()
     model=torch.compile(model)
-    optimizer=AdamW(model.parameters(),lr=1e-4)
+    optimizer=AdamW(model.parameters(),lr=1e-4,beta=(0.9,0.95),eps=1e-8,weight_decay=0.1)
     scheduler=torch.optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
     for i,(x,y) in enumerate(dataloader):
         x=x.to(device)
@@ -182,6 +221,10 @@ def train(model,dataloader,device,epoch):
         
         optimizer.zero_grad()
         loss.backward()
+        norm=torch.nn.utils.clip_grad_norm_(model.parameters(),1.0)
+        lr=get_lr(i)
+        for param_group in optimizer.param_groups:
+            param_group['lr']= lr
         optimizer.step()
         scheduler.step()
     
@@ -225,11 +268,4 @@ if __name__=="__main__":
     end_time=time.time()
     print(f"time cost:{end_time-start_time}")  
     print(f"generated text:{generated_text}")
-    
-    
-    
-    
-
-    
-
 
