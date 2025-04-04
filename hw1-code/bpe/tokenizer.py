@@ -114,7 +114,7 @@ class Tokenizer:
 if __name__=="__main__":
     tokenizer=Tokenizer()
     vocab_size=1024
-    with open('bpe/manual.txt',encoding='utf-8') as f:
+    with open('./manual.txt',encoding='utf-8') as f:
         text=f.read()
         tokenizer.train(text,vocab_size=vocab_size)
         encoded=tokenizer.encode(text)

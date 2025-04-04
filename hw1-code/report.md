@@ -86,3 +86,19 @@
 
 ## LLM training
 
+根据Andrej Karpathy的视频，复现了GPT2的模型框架，git commit 提交记录如下
+
+![image-20250405003706219](C:\Users\Lenovo\AppData\Roaming\Typora\typora-user-images\image-20250405003706219.png)![image-20250405003721941](C:\Users\Lenovo\AppData\Roaming\Typora\typora-user-images\image-20250405003721941.png)
+
+提交记录可以[点击此处](https://github.com/coldsakrua/align/commits/master/)基本就是按照youtube上章节划分，commit的message就是实现的功能。前半部分侧重于模型的实现，后半部分侧重于训练+推理的优化以及evaluation。比较有收获的点：`torch.compile`可以加速训练（不过并不常用）；`vocab_size`的修改可以加速训练；`kernel fusion`的使用和`ddp`的实现（之前都是直接套）。
+
+以及GPT2相比与算法，更像是一种工程实现，在算法实现的基础上不断套优化（后半部分几乎都在优化）。
+
+- Section1：模型的构造+初始化，包括load hf中要改一些字典键名（我记得megatron2pytorch也需要）
+- Section2：一些加速trick，更倾向于底层算法（精度、conpile、flash attention等，包括vocab_size也是为了加速GPU内的运算）
+- Section3：优化模型的效果，并且分布式训练。比如使用fusionAdamW，梯度累计，warmup等，分布式训练使用DDP，最后来评估模型效果。
+- Section4：Summary，查看了nanogpt和124M的gpt2、gpt3的效果比较，并且证明了c比py快。一些小总结
+- PS：Karpathy真有钱，随手8张a100。。。
+
+## LoRA finetune
+
