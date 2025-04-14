@@ -1,0 +1,7 @@
+  0%|          | 0/7 [00:00<?, ?it/s]You're using a BloomTokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+  0%|          | 0/7 [00:30<?, ?it/s]
+100%|██████████| 13/13 [01:12<00:00,  5.60s/it]
+d:\anaconda\envs\dress\lib\site-packages\peft\utils\save_and_load.py:154: UserWarning: Could not find a config file in E:/hw/align/align/hw1-code/bloomz - will assume that the vocabulary was not modified.
+{'train_runtime': 72.7533, 'train_samples_per_second': 0.687, 'train_steps_per_second': 0.179, 'train_loss': 3.9522311870868387, 'epoch': 1.0}
+  warnings.warn(
+['I love this movie because it is so much more than just a story of the life and death in Hollywood. It has to be one that you can watch with your kids, or even if you\'re not into movies like "The Office" (which I have never seen) but still enjoy watching them on TV! The film was made by John Wayne\'s father-in-law Tom Ford - who also directed several other films including "Time Attacks" which were all very good). But what about those people whose lives are being ruined? What happens when']

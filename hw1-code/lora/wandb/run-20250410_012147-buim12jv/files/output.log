@@ -1,0 +1,10 @@
+  0%|          | 0/350 [00:00<?, ?it/s]You're using a BloomTokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+  0%|          | 0/350 [00:14<?, ?it/s]
+  0%|          | 0/650 [00:00<?, ?it/s]          d:\anaconda\envs\dress\lib\site-packages\peft\utils\save_and_load.py:154: UserWarning: Could not find a config file in E:/hw/align/align/hw1-code/bloomz - will assume that the vocabulary was not modified.
+  warnings.warn( 500/650 [37:39<39:34, 15.83s/it]  
+{'loss': 0.9741, 'learning_rate': 0.002307692307692308, 'epoch': 38.46}
+100%|██████████| 650/650 [1:12:00<00:00,  6.65s/it]
+d:\anaconda\envs\dress\lib\site-packages\peft\utils\save_and_load.py:154: UserWarning: Could not find a config file in E:/hw/align/align/hw1-code/bloomz - will assume that the vocabulary was not modified.
+{'train_runtime': 4320.1618, 'train_samples_per_second': 0.579, 'train_steps_per_second': 0.15, 'train_loss': 0.7553639723704412, 'epoch': 50.0}
+  warnings.warn(
+['I love this movie because it is funny and I like the soundtrack to each scene.<br /><br />The plot seems random but it\'s actually quite interesting in its own way :) You will not be disappointed as a result, 5 of us have laughed about them.. The cinematography by Alex l\'encarreg ("the man with his guitar""), Garai parets ,Isabella cachoroi(* ),Francesca rengelii, ...and most importantly for those that are fans Montalbano .. <br><br>10/10 recommend go see']

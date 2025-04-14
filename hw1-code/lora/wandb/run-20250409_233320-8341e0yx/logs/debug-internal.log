@@ -1,0 +1,16 @@
+{"time":"2025-04-09T23:33:20.7810569+08:00","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"e:\\hw\\align\\align\\hw1-code\\lora\\wandb\\run-20250409_233320-8341e0yx\\logs\\debug-core.log"}
+{"time":"2025-04-09T23:33:21.1059331+08:00","level":"INFO","msg":"created new stream","id":"8341e0yx"}
+{"time":"2025-04-09T23:33:21.1059331+08:00","level":"INFO","msg":"stream: started","id":"8341e0yx"}
+{"time":"2025-04-09T23:33:21.1059331+08:00","level":"INFO","msg":"sender: started","stream_id":"8341e0yx"}
+{"time":"2025-04-09T23:33:21.1059331+08:00","level":"INFO","msg":"writer: Do: started","stream_id":"8341e0yx"}
+{"time":"2025-04-09T23:33:21.1059331+08:00","level":"INFO","msg":"handler: started","stream_id":"8341e0yx"}
+{"time":"2025-04-09T23:33:22.0228145+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-04-09T23:34:43.3593347+08:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2025-04-09T23:34:43.3727173+08:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2025-04-09T23:34:43.3988372+08:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2025-04-09T23:34:43.4233594+08:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2025-04-09T23:34:45.1057343+08:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2025-04-10T00:53:39.4093818+08:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2025-04-10T00:53:39.4270825+08:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2025-04-10T00:53:40.779911+08:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2025-04-10T01:01:41.7964861+08:00","level":"INFO","msg":"Pausing system monitor"}

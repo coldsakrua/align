@@ -16,7 +16,7 @@ def str2bool(string: str) -> bool:
 
 def _make_r_io_base(f, mode: str):
     if not isinstance(f, io.IOBase):
-        f = open(f, mode=mode)
+        f = open(f, mode=mode ,encoding='utf-8')
     return f
 
 

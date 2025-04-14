@@ -6,7 +6,7 @@ python train.py \
     --lora_dim 8 \
     --lora_scaling 32 \
     --lora_module_name h. \
-    --data_path ./data/alpaca_data.json \
+    --data_path ./data/train.json \
     --epochs 4 \
     --train_batch_size 8 \
     --gradient_accumulation_steps 4 \

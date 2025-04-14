@@ -9,9 +9,9 @@ def parse_arguments():
     parser.add_argument(
         "--model_name_or_path",
         type=str,
-        default="gpt2",
+        default="E:/hw/align/align/hw1-code/gpt",
         help='Path to the model checkpoint or its name.',
-        required=True,
+        required=False,
     )
     parser.add_argument(
         '--max_length',
@@ -56,9 +56,9 @@ def parse_arguments():
     parser.add_argument(
         '--data_path',
         type=str,
-        default='./data/alpaca_data.json',
+        default='./data/train.json',
         help='Path to the training data.',
-        required=True,
+        required=False,
     )
     parser.add_argument(
         '--epochs',
@@ -69,13 +69,12 @@ def parse_arguments():
     parser.add_argument(
         '--train_batch_size',
         type=int,
-        default=8,
+        default=1,
         help='Batch size for the training dataloader.',
     )
     parser.add_argument(
         '--gradient_accumulation_steps',
         type=int,
-        default=1,
         help='Number of backward steps to accumulate before performing an update.',
     )
     parser.add_argument(

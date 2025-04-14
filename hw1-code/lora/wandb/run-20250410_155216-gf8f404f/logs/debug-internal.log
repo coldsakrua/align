@@ -1,0 +1,15 @@
+{"time":"2025-04-10T15:52:16.8686987+08:00","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"e:\\hw\\align\\align\\hw1-code\\lora\\wandb\\run-20250410_155216-gf8f404f\\logs\\debug-core.log"}
+{"time":"2025-04-10T15:52:17.1670565+08:00","level":"INFO","msg":"created new stream","id":"gf8f404f"}
+{"time":"2025-04-10T15:52:17.1670565+08:00","level":"INFO","msg":"stream: started","id":"gf8f404f"}
+{"time":"2025-04-10T15:52:17.1670565+08:00","level":"INFO","msg":"handler: started","stream_id":"gf8f404f"}
+{"time":"2025-04-10T15:52:17.1670565+08:00","level":"INFO","msg":"writer: Do: started","stream_id":"gf8f404f"}
+{"time":"2025-04-10T15:52:17.1670565+08:00","level":"INFO","msg":"sender: started","stream_id":"gf8f404f"}
+{"time":"2025-04-10T15:52:17.8688884+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-04-10T17:07:53.8270339+08:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2025-04-10T17:07:53.8397869+08:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2025-04-10T17:07:53.8584637+08:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2025-04-10T17:07:53.8717128+08:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2025-04-10T17:07:55.6080824+08:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2025-04-10T22:39:08.1372251+08:00","level":"INFO","msg":"api: retrying HTTP error","status":502,"url":"https://api.wandb.ai/files/guzhoudiaoxue0706-peking-university/huggingface/gf8f404f/file_stream","body":"\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>502 Server Error</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Server Error</h1>\n<h2>The server encountered a temporary error and could not complete your request.<p>Please try again in 30 seconds.</h2>\n<h2></h2>\n</body></html>\n"}
+{"time":"2025-04-10T23:54:32.0179992+08:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2025-04-10T23:54:32.0220255+08:00","level":"INFO","msg":"Pausing system monitor"}

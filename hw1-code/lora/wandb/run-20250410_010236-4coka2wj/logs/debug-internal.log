@@ -1,0 +1,8 @@
+{"time":"2025-04-10T01:02:36.4360523+08:00","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"e:\\hw\\align\\align\\hw1-code\\lora\\wandb\\run-20250410_010236-4coka2wj\\logs\\debug-core.log"}
+{"time":"2025-04-10T01:02:36.7323051+08:00","level":"INFO","msg":"created new stream","id":"4coka2wj"}
+{"time":"2025-04-10T01:02:36.7328583+08:00","level":"INFO","msg":"handler: started","stream_id":"4coka2wj"}
+{"time":"2025-04-10T01:02:36.7328583+08:00","level":"INFO","msg":"stream: started","id":"4coka2wj"}
+{"time":"2025-04-10T01:02:36.7328583+08:00","level":"INFO","msg":"writer: Do: started","stream_id":"4coka2wj"}
+{"time":"2025-04-10T01:02:36.7328583+08:00","level":"INFO","msg":"sender: started","stream_id":"4coka2wj"}
+{"time":"2025-04-10T01:02:37.4182522+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-04-10T01:05:44.9548569+08:00","level":"INFO","msg":"Pausing system monitor"}

@@ -1,0 +1,16 @@
+  0%|          | 0/1050 [00:00<?, ?it/s]You're using a BloomTokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+  0%|          | 0/1050 [00:13<?, ?it/s]
+  0%|          | 0/1950 [00:00<?, ?it/s]            d:\anaconda\envs\dress\lib\site-packages\peft\utils\save_and_load.py:154: UserWarning: Could not find a config file in E:/hw/align/align/hw1-code/bloomz - will assume that the vocabulary was not modified.
+  warnings.warn( 500/1950 [18:37<1:45:26,  4.36s/it]
+{'loss': 1.2289, 'learning_rate': 0.002230769230769231, 'epoch': 38.46}
+                                                   d:\anaconda\envs\dress\lib\site-packages\peft\utils\save_and_load.py:154: UserWarning: Could not find a config file in E:/hw/align/align/hw1-code/bloomz - will assume that the vocabulary was not modified.
+  warnings.warn( 1000/1950 [36:49<23:31,  1.49s/it] 
+{'loss': 0.0598, 'learning_rate': 0.0014615384615384616, 'epoch': 76.92}
+                                                   d:\anaconda\envs\dress\lib\site-packages\peft\utils\save_and_load.py:154: UserWarning: Could not find a config file in E:/hw/align/align/hw1-code/bloomz - will assume that the vocabulary was not modified.
+  warnings.warn( 1500/1950 [54:42<17:24,  2.32s/it]  
+{'loss': 0.0151, 'learning_rate': 0.0006923076923076924, 'epoch': 115.38}
+100%|██████████| 1950/1950 [1:10:50<00:00,  2.18s/it]
+d:\anaconda\envs\dress\lib\site-packages\peft\utils\save_and_load.py:154: UserWarning: Could not find a config file in E:/hw/align/align/hw1-code/bloomz - will assume that the vocabulary was not modified.
+{'train_runtime': 4250.8484, 'train_samples_per_second': 1.764, 'train_steps_per_second': 0.459, 'train_loss': 0.3363541341439272, 'epoch': 150.0}
+  warnings.warn(
+["I love this movie because it shows just how disconnected our society is. The relationship between guys and girls isn't really connected at all, it's almost artificial (even the end scene with Kristen-géré seems terlalu நேரwhelming). This has got me thinking about connect wirts :( . <br /><br />The least passing thing that worries me: there are more like us connections in my life than turns.\nIf anybody knows what kind of person to be try asking someone who makes cinéma myself. (I'm not counting trolls meanwise.) Just give"]

@@ -1,0 +1,7 @@
+  0%|          | 0/14 [00:00<?, ?it/s]You're using a BloomTokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+  0%|          | 0/14 [00:21<?, ?it/s]
+100%|██████████| 26/26 [01:37<00:00,  3.74s/it]
+d:\anaconda\envs\dress\lib\site-packages\peft\utils\save_and_load.py:154: UserWarning: Could not find a config file in E:/hw/align/align/hw1-code/bloomz - will assume that the vocabulary was not modified.
+{'train_runtime': 97.2177, 'train_samples_per_second': 1.029, 'train_steps_per_second': 0.267, 'train_loss': 3.879503690279447, 'epoch': 2.0}
+  warnings.warn(
+["I love this movie because it is a very good story. I was just wondering if there would be another film with the same name, but that one didn't work out for me either!<br /><br />The only thing about my life and career as an actor/actor (and yes that's what happened to many of us) are not being able or willing enough in some ways...to do something like this: make up your own character....make sure you have all these things right at hand!! <brincoohs!!! The acting"]

@@ -60,11 +60,11 @@ class SupervisedDataset(Dataset):
         logging.warning("Formatting inputs...")
         sources = []
         for example in list_data_dict:
-            instruction = ' '.join((example['instruction'], example['input'])) if example['input'] else example['instruction']
+            instruction = ' '.join(str((example['instruction'], example['input']))) if example['input'] else example['instruction']
             source = PROMPT_INPUT.format(input=instruction)
             sources.append(source)
-        targets = [f" {example['output'].strip()}{tokenizer.eos_token}" for example in list_data_dict]
-
+        targets = [f" {str(example['output']).strip()}{tokenizer.eos_token}" for example in list_data_dict]
+        print("-------",str(example['output']),"-------")
         num_eval = int(len(sources) * eval_ratio)
         if split == "train":
             sources = sources[:-num_eval]
